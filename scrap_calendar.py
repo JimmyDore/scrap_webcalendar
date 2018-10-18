@@ -5,8 +5,11 @@ from datetime import datetime, timedelta
 import requests
 import os, os.path, csv
 
+import config
+
 from icalendar import Calendar, Event
 
+import ftplib
 
 def getDatas():
     listingurl = "http://hbcnantes.com/equipe-professionnelle/equipe-pro-calendrier/"
@@ -97,6 +100,14 @@ def getICS(calendar_hbcn):
     f.write(cal.to_ical())
     f.close()
 
+def sendFileToFTPServer():
+    session = ftplib.FTP(config.HOST_FTP,config.USERNAME_FTP,config.PASSWORD_FTP)
+    file = open('hbcn_calendar.ics','rb')                  # file to send
+    session.storbinary('STOR hbcn_calendar.ics', file)     # send the file
+    file.close()                                    # close file and FTP
+    session.quit()
+
 if __name__ == '__main__':
     datas_calendar = getDatas()
     getICS(datas_calendar)
+    sendFileToFTPServer()
