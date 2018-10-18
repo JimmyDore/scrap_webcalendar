@@ -34,6 +34,7 @@ def getICS(calendar_hbcn):
             11/11/2018 – 18h00
             21-22/11/2018
             20/12/2018
+            #TODO : REFACTO THIS PART, it's not really beautiful(soup)
         """
         date_v2 = date.encode('utf-8').split('–')
         if len(date_v2) >= 2: #Date type : 11/11/2018 – 18h00
@@ -72,7 +73,7 @@ def getICS(calendar_hbcn):
         event = Event()
         
         #--Title event
-        summary = 'd1 hand : ' + game[2] + '-' + game[4]
+        summary = 'D1 Hand : ' + game[2] + '-' + game[4]
         event.add('summary', summary)
 
         #--Dates event
