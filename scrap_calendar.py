@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bs4 import BeautifulSoup
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 import requests
 import os, os.path, csv
@@ -10,6 +10,8 @@ import config
 from icalendar import Calendar, Event
 
 import ftplib
+
+
 
 def getDatas():
     listingurl = "http://hbcnantes.com/equipe-professionnelle/equipe-pro-calendrier/"
@@ -39,7 +41,8 @@ def getICS(calendar_hbcn):
             20/12/2018
             #TODO : REFACTO THIS PART, it's not really beautiful(soup)
         """
-        date_v2 = date.encode('utf-8').split('–')
+        #date_v2 = date.encode('utf-8').split('–')
+        date_v2 = date.split('–')
         if len(date_v2) >= 2: #Date type : 11/11/2018 – 18h00
             date_v3 = date_v2[0].split('/')
             date_v4 = date_v2[1].split('h')
@@ -96,18 +99,80 @@ def getICS(calendar_hbcn):
 
         cal.add_component(event)
 
-    f = open('hbcn_calendar.ics', 'wb')
+    f = open('ics/hbcn_calendar.ics', 'wb')
     f.write(cal.to_ical())
     f.close()
 
-def sendFileToFTPServer():
+
+
+def getIcalCSVFile(csvfile):
+
+    #TODO : Recup csv file birthday
+    # 
+    birthdays = []
+    with open(csvfile, 'r') as csvfile:
+        spamreader = csv.reader(csvfile, delimiter=',')
+        i = 0
+        for row in spamreader:
+            if i != 0:
+                birthdays.append({'name':row[0],'date':row[1]})
+            i += 1
+
+    cal = Calendar()
+
+    # FIXME : Don't know how to repeat events using icalendar for python
+    # so i add the event for the next 100 years (not optimal)
+    # a solution could be to directly update the ics generated to add a repeat rule
+    year = 2018
+    years = []
+    for i in range(100):
+        years.append(year)
+        year += 1
+
+    for y in years:
+        for birthday in birthdays:
+            event = Event()
+            
+            #--Title event
+            summary = 'Birthday : ' + birthday['name']
+            event.add('summary', summary)
+
+            #--Dates event
+            #import ipdb; ipdb.set_trace()
+            date_values = birthday['date'].split('/')
+
+            start_date = date(y,int(date_values[1]),int(date_values[0]))
+            
+            event.add('dtstart', start_date)
+            event.add('dtend', start_date)
+
+            #Description event
+            event.add('description', summary)
+
+            cal.add_component(event)
+
+    f = open('ics/birthdays.ics', 'wb')
+    f.write(cal.to_ical())
+    f.close()
+
+
+
+def sendFileToFTPServer(file_name,folder_localfile_path ='',folder_ftp_path='/'):
     session = ftplib.FTP(config.HOST_FTP,config.USERNAME_FTP,config.PASSWORD_FTP)
-    file = open('hbcn_calendar.ics','rb')                  # file to send
-    session.storbinary('STOR hbcn_calendar.ics', file)     # send the file
-    file.close()                                    # close file and FTP
+    session.cwd(folder_ftp_path)
+    file = open(folder_localfile_path+file_name,'rb')                  # file to send
+    session.storbinary('STOR '+file_name, file)     # send the file
+    file.close()                                                    # close file and FTP
     session.quit()
 
+
 if __name__ == '__main__':
+    #HBCN
     datas_calendar = getDatas()
     getICS(datas_calendar)
-    sendFileToFTPServer()
+    sendFileToFTPServer('hbcn_calendar.ics','ics/','/ics_ffhb')
+
+    #BIRTHDAYS
+    getIcalCSVFile('birthdays.csv')
+    sendFileToFTPServer('birthdays.ics','ics/')
+
