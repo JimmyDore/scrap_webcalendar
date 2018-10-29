@@ -1,5 +1,5 @@
 #!/bin/bash
 
-cd ~/Projets/scrap_webcalendar
-source scrap_webcalendar/bin/activate
-python scrap_calendar.py
+cd /home/jimmydore/Projets/scrap_webcalendar
+myvenv/bin/python scrap_calendar.py
+cp -r ics/ ../personal_website
