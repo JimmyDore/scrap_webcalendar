@@ -14,7 +14,6 @@ import ftplib
 
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-import pandas as pd
 
 #I KNOW THIS CODE IS MESSY, BUT IT'S FOR A PERSONAL USE, SO IT'S MY MESS
 #FIXME: Refacto later
