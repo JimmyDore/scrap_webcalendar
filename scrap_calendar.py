@@ -20,6 +20,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 #-----------------------
 #------SCRAP HBCN
+#-----------------------
 
 def getDatas():
     listingurl = "http://hbcnantes.com/equipe-professionnelle/equipe-pro-calendrier/"
@@ -112,6 +113,7 @@ def getICS(calendar_hbcn):
 
 #-----------------------
 #------GET BIRTHDAYS AND BUILD ICS
+#-----------------------
 
 def getBirthdayIcalCSVFile(csvfile):
 
@@ -164,6 +166,7 @@ def getBirthdayIcalCSVFile(csvfile):
 
 #--------------------------------------
 #------GET EDT PERSO FROM GOOGLE SHEETS
+#-----------------------
 
 def getPersonalCalendarICS():
     
@@ -191,12 +194,18 @@ def getPersonalCalendarICS():
         hour_list.append(h)
         
     cal = Calendar()
+    LAST_HOUR_IN_LINE = 23 #Last hour in edt
+
 
     #We get the days
     for day in timetable[1:]:
         for i in range(len(day)):
             value = day[i]
-            if value != '' and value in liste_types_occupations:
+            #3 conditions :
+            # une valeur pas vide
+            # une valeur appartenant à la liste des occupations possibles
+            # une valeur différente de la précédente (si plusieurs valeurs apparaissent plusieurs fois d'affilée, on va traiter ça comme une longue période)           
+            if value != '' and value in liste_types_occupations and value != day[i-1]:
                 event = Event()
 
                 event.add('summary', value)
@@ -211,14 +220,22 @@ def getPersonalCalendarICS():
 
                 start_date = datetime(year,month,day_date,hour,minutes,0)
 
-                #FIXME : Uglyyy, just not time to check how to deal with events at end of the days
-                if hour + 1 == 24:
-                    end_hour = hour
-                    end_minutes = 59
-                else:
-                    end_hour = hour+1
-                    end_minutes = 0
-                
+                #FIXME : An event on mutiple days is broken in multiple events (not expected behaviour) 
+                j = i
+                end_minutes = 0
+                end_hour = hour
+                while day[j] == value:#Go in it at least once
+                    if end_hour != LAST_HOUR_IN_LINE:
+                        j+=1
+                        end_hour = int(hour_list[j].split(':')[0])
+                        if end_hour == 0:
+                            end_hour = 23
+                            end_minutes = 59
+                            break
+                    else:
+                        end_hour = 23
+                        end_minutes = 59
+                        break                
                 end_date = datetime(year,month,day_date,end_hour,end_minutes,0)
                 
                 event.add('dtstart', start_date)
