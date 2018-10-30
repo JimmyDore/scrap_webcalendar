@@ -12,6 +12,15 @@ from icalendar import Calendar, Event
 import ftplib
 
 
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import pandas as pd
+
+#I KNOW THIS CODE IS MESSY, BUT IT'S FOR A PERSONAL USE, SO IT'S MY MESS
+#FIXME: Refacto later
+
+#-----------------------
+#------SCRAP HBCN
 
 def getDatas():
     listingurl = "http://hbcnantes.com/equipe-professionnelle/equipe-pro-calendrier/"
@@ -46,8 +55,6 @@ def getICS(calendar_hbcn):
         if len(date_v2) >= 2: #Date type : 11/11/2018 – 18h00
             date_v3 = date_v2[0].split('/')
             date_v4 = date_v2[1].split('h')
-            #if['20', '10', '2018 '] == date_v3:
-            #    import ipdb; ipdb.set_trace()
             start_date = datetime(int(date_v3[2]),int(date_v3[1]),int(date_v3[0]),int(date_v4[0].replace("\xc2\xa0", "")),int(date_v4[1]),0)
             end_date = start_date + timedelta(hours=1.5)
         else:
@@ -104,8 +111,10 @@ def getICS(calendar_hbcn):
     f.close()
 
 
+#-----------------------
+#------GET BIRTHDAYS AND BUILD ICS
 
-def getIcalCSVFile(csvfile):
+def getBirthdayIcalCSVFile(csvfile):
 
     #TODO : Recup csv file birthday
     # 
@@ -138,7 +147,6 @@ def getIcalCSVFile(csvfile):
             event.add('summary', summary)
 
             #--Dates event
-            #import ipdb; ipdb.set_trace()
             date_values = birthday['date'].split('/')
 
             start_date = date(y,int(date_values[1]),int(date_values[0]))
@@ -155,6 +163,76 @@ def getIcalCSVFile(csvfile):
     f.write(cal.to_ical())
     f.close()
 
+#--------------------------------------
+#------GET EDT PERSO FROM GOOGLE SHEETS
+
+def getPersonalCalendarICS():
+    
+    #Lien du fichier edt utilisé : https://docs.google.com/spreadsheets/d/1-c3zJ_76plOdyz37-_McaBqHHV3zoWnvOAs6zChiDdE/edit?usp=sharing 
+    scope = ['https://spreadsheets.google.com/feeds',
+            'https://www.googleapis.com/auth/drive']
+
+    credentials = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+
+    gc = gspread.authorize(credentials)
+
+    edt = gc.open("Calendar_projects").worksheet("edt")
+    types_occupation = gc.open("Calendar_projects").worksheet("types_occupation").range('A2:A50')
+
+    #Liste of types of occupations
+    liste_types_occupations = []
+    for occupation in types_occupation:
+        if occupation.value != '':
+            liste_types_occupations.append(occupation.value)
+
+    timetable = edt.get_all_values()
+
+    hour_list=[]
+    for h in timetable[0]:
+        hour_list.append(h)
+        
+    cal = Calendar()
+
+    #We get the days
+    for day in timetable[1:]:
+        for i in range(len(day)):
+            value = day[i]
+            if value != '' and value in liste_types_occupations:
+                event = Event()
+
+                event.add('summary', value)
+
+                #--Dates event
+
+                day_date = int(day[1].split('/')[0])
+                month = int(day[1].split('/')[1])
+                year = int(day[1].split('/')[2])
+                hour = int(hour_list[i].split(':')[0])
+                minutes = int(hour_list[i].split(':')[1])
+
+                start_date = datetime(year,month,day_date,hour,minutes,0)
+
+                #FIXME : Uglyyy, just not time to check how to deal with events at end of the days
+                if hour + 1 == 24:
+                    end_hour = hour
+                    end_minutes = 59
+                else:
+                    end_hour = hour+1
+                    end_minutes = 0
+                
+                end_date = datetime(year,month,day_date,end_hour,end_minutes,0)
+                
+                event.add('dtstart', start_date)
+                event.add('dtend', end_date)
+
+                #Description event
+                event.add('description', value)
+
+                cal.add_component(event)
+
+    f = open('ics/edt_perso.ics', 'wb')
+    f.write(cal.to_ical())
+    f.close()
 
 
 def sendFileToFTPServer(file_name,folder_localfile_path ='',folder_ftp_path='/'):
@@ -172,9 +250,13 @@ if __name__ == '__main__':
     #HBCN
     datas_calendar = getDatas()
     getICS(datas_calendar)
-    sendFileToFTPServer('hbcn_calendar.ics','ics/','/ics_ffhb')
+    #sendFileToFTPServer('hbcn_calendar.ics','ics/','/ics_ffhb')
 
     #BIRTHDAYS
-    getIcalCSVFile('birthdays.csv')
-    sendFileToFTPServer('birthdays.ics','ics/')
+    getBirthdayIcalCSVFile('birthdays.csv')
+    #sendFileToFTPServer('birthdays.ics','ics/')
+
+    #CalendarPerso project
+    getPersonalCalendarICS()
+    #sendFileToFTPServer('edt_perso.ics','ics/')
 
