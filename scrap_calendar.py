@@ -115,18 +115,36 @@ def getICS(calendar_hbcn):
 #------GET BIRTHDAYS AND BUILD ICS
 #-----------------------
 
-def getBirthdayIcalCSVFile(csvfile):
+def getBirthdayIcalCSVFile():
 
     #TODO : Recup csv file birthday
     # 
     birthdays = []
-    with open(csvfile, 'r') as csvfile:
-        spamreader = csv.reader(csvfile, delimiter=',')
-        i = 0
-        for row in spamreader:
-            if i != 0:
-                birthdays.append({'name':row[0],'date':row[1]})
-            i += 1
+    #with open('birthdays.csv', 'r') as csvfile:
+    #    spamreader = csv.reader(csvfile, delimiter=',')
+    #    i = 0
+    #    for row in spamreader:
+    #        if i != 0:
+    #            birthdays.append({'name':row[0],'date':row[1]})
+    #        i += 1
+
+    scope = ['https://spreadsheets.google.com/feeds',
+            'https://www.googleapis.com/auth/drive']
+
+    credentials = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+
+    gc = gspread.authorize(credentials)
+
+    birthdays_sheets = gc.open("Birthdays").worksheet("annivs").get_all_values()
+    i = 0
+    for b in birthdays_sheets:
+        if i != 0:
+            birthdays.append({
+                'name':b[0],
+                'date':b[1]
+            })
+        i+=1
+
 
     cal = Calendar()
 
@@ -269,7 +287,7 @@ if __name__ == '__main__':
     #sendFileToFTPServer('hbcn_calendar.ics','ics/','/ics_ffhb')
 
     #BIRTHDAYS
-    getBirthdayIcalCSVFile('birthdays.csv')
+    getBirthdayIcalCSVFile()
     #sendFileToFTPServer('birthdays.ics','ics/')
 
     #CalendarPerso project
