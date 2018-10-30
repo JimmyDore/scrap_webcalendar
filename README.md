@@ -16,3 +16,4 @@ setup cron : https://awc.com.my/uploadnew/5ffbd639c5e6eccea359cb1453a02bed_Setti
 
 setup google api : https://www.twilio.com/blog/2017/02/an-easy-way-to-read-and-write-to-a-google-spreadsheet-in-python.html
 
+copier script install dans cron.daily : sudo cp -R /home/jimmydore/Projets/scrap_webcalendar/start.sh /etc/cron.daily/update_ics.sh

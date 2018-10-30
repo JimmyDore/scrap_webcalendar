@@ -261,7 +261,7 @@ def sendFileToFTPServer(file_name,folder_localfile_path ='',folder_ftp_path='/')
 
 
 if __name__ == '__main__':
-    #TODO : Pour anniv essentiellmeent, refaire ics si borthdays.csv a été modifié récemment
+    #TODO : Pour anniv et edt essentiellmeent, refaire ics si birthdays.csv a été modifié récemment
 
     #HBCN
     datas_calendar = getDatas()
