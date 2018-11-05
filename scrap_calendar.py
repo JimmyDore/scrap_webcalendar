@@ -42,7 +42,7 @@ def getDatas():
 def getICS(calendar_hbcn):
     """ 
     """
-    def getStartEndDate(date):
+    def getStartEndDate(date_game):
         """
             Possible date format input :
             11/11/2018 – 18h00
@@ -51,22 +51,22 @@ def getICS(calendar_hbcn):
             #TODO : REFACTO THIS PART, it's not really beautiful(soup)
         """
         #date_v2 = date.encode('utf-8').split('–')
-        date_v2 = date.split('–')
+        date_v2 = date_game.split('–')
         if len(date_v2) >= 2: #Date type : 11/11/2018 – 18h00
             date_v3 = date_v2[0].split('/')
             date_v4 = date_v2[1].split('h')
             start_date = datetime(int(date_v3[2]),int(date_v3[1]),int(date_v3[0]),int(date_v4[0].replace("\xc2\xa0", "")),int(date_v4[1]),0)
             end_date = start_date + timedelta(hours=1.5)
         else:
-            date_v2 = date.split('-')
+            date_v2 = date_game.split('-')
             if len(date_v2) >= 2: #Date type : 21-22/11/2018                    
                 date_v3 = date_v2[1].split('/')
-                start_date = datetime(int(date_v3[2]),int(date_v3[1]),int(date_v3[0])-1,0,0,1)
-                end_date = start_date + timedelta(hours=23)
+                start_date = date(int(date_v3[2]),int(date_v3[1]),int(date_v3[0])-1)
+                end_date = start_date
             else: #Date type : 20/12/2018
                 date_v3 = date_v2[0].split('/')
-                start_date = datetime(int(date_v3[2]),int(date_v3[1]),int(date_v3[0]),0,0,1)
-                end_date = start_date + timedelta(hours=23)
+                start_date = date(int(date_v3[2]),int(date_v3[1]),int(date_v3[0]))
+                end_date = start_date
 
         return start_date,end_date
 
@@ -97,7 +97,7 @@ def getICS(calendar_hbcn):
         #Description event
         description = summary + '\n' + game[0] + '\n' + game[5] + '\n'
         if len(game[3]) > 0:
-            description += "Score du match : game[3]"
+            description += "Score du match " + game[3]
 
         event.add('description', description)
 
