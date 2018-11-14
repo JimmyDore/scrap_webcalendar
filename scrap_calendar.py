@@ -50,6 +50,7 @@ def getICS(calendar_hbcn):
             20/12/2018
             #TODO : REFACTO THIS PART, it's not really beautiful(soup)
         """
+
         #date_v2 = date.encode('utf-8').split('–')
         date_v2 = date_game.split('–')
         if len(date_v2) >= 2: #Date type : 11/11/2018 – 18h00
@@ -149,13 +150,14 @@ def getBirthdayIcalCSVFile():
     cal = Calendar()
 
     # FIXME : Don't know how to repeat events using icalendar for python
-    # so i add the event for the next 100 years (not optimal)
+    # so i add the event for this year and the next one (not optimal)
     # a solution could be to directly update the ics generated to add a repeat rule
-    year = 2018
+
+    now = datetime.now()
+    year = now.year
     years = []
-    for i in range(100):
-        years.append(year)
-        year += 1
+    years.append(year)
+    years.append(year + 1)
 
     for y in years:
         for birthday in birthdays:
@@ -279,7 +281,7 @@ def sendFileToFTPServer(file_name,folder_localfile_path ='',folder_ftp_path='/')
 
 
 if __name__ == '__main__':
-    #TODO : Pour anniv et edt essentiellmeent, refaire ics si birthdays.csv a été modifié récemment
+    #TODO : Pour anniv et edt essentiellmeent, refaire ics si birthdays.csv et edt.csv a été modifié récemment
 
     #HBCN
     datas_calendar = getDatas()
