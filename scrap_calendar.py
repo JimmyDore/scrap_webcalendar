@@ -52,7 +52,14 @@ def getICS(calendar_hbcn):
         """
 
         #date_v2 = date.encode('utf-8').split('–')
-        date_v2 = date_game.split('–')
+        
+        #Bug sur le site du HBC Nantes pour une date en particulier : 
+        #TODO DEGAGER CETTE HORREUR, mais pas eu le temps de faire un fix correct
+        if (date_game == '10/02/2019\xa0 17h00'):
+            date_v2 = date_game.split('\xa0 ')
+        else:
+            date_v2 = date_game.split('–')
+
         if len(date_v2) >= 2: #Date type : 11/11/2018 – 18h00
             date_v3 = date_v2[0].split('/')
             date_v4 = date_v2[1].split('h')
